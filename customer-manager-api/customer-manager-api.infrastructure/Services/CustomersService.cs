@@ -1,5 +1,6 @@
 ﻿using customer_management.Requests;
 using customer_manager_api.application.Services;
+using customer_manager_api.domain;
 using customer_manager_api.domain.Constants;
 using customer_manager_api.domain.Models;
 using customer_manager_api.domain.Repositories;
@@ -27,7 +28,6 @@ namespace customer_manager_api.infrastructure.Services
             var errors = new Dictionary<string, string[]>();
             var customersToCreate = new List<Customer>();
             var validator = new CreateCustomerRequestValidator();
-
             var count = 0;
 
             foreach (var c in customers)
@@ -42,22 +42,27 @@ namespace customer_manager_api.infrastructure.Services
                     continue;
                 }
 
+                if (await _repository.ExistsAsync(x => x.Id == c.Id))
+                {
+                    errors.Add(count.ToString(), new string[] { ValidationMessages.IdMustBeUnique });
+                    count++;
+                    continue;
+                }
+
                 customersToCreate.Add((Customer)c);
                 count++;
             }
 
+            var noCustomersToCreate = !customersToCreate.Any();
             var customerArray = customersToCreate.ToArray();
-
-            
             SynchronizeCache(customerArray);
             BackgroundJob.Enqueue(() => _repository.AddRangeAsync(customerArray));
 
             return new ApiResponse
             {
                 Errors = errors,
-                Success = true,
-                Message = errors.Any() ? WarningMessages.RequestHasErrors : SuccessMessages.RequestSucceeded,
-                Status = errors.Any() ? ResponseStatuses.PartialSuccess : ResponseStatuses.Success
+                Success = !noCustomersToCreate,
+                Message = errors.Any() ? WarningMessages.RequestHasErrors : SuccessMessages.RequestSucceeded
             };
         }
 
@@ -66,7 +71,7 @@ namespace customer_manager_api.infrastructure.Services
             Customer aux;
             int i;
             var lastPosition = customers.Length - 1;
-            for (i = (lastPosition / 2); i >= 1; i--)
+            for (i = (lastPosition / 2); i >= 0; i--)
             {
                 CreateHeap(customers, i, lastPosition - 1);
             }
@@ -81,7 +86,7 @@ namespace customer_manager_api.infrastructure.Services
 
         }
         private void CreateHeap(Customer[] customers, int start, int end)
-        {
+        {            
             var nodeRoot = customers[start];
             var nodeRootFullName = $"{nodeRoot.FirstName}{nodeRoot.LastName}";
             var j = start * 2 + 1;
@@ -93,10 +98,16 @@ namespace customer_manager_api.infrastructure.Services
 
                 if (j < end)
                 {
-                    var nextNameIsBigger = currentFullName.CompareTo(nextFullName) < 0;
+                    var nextNamePrecedsCurrent = currentFullName.CompareTo(nextFullName) < 0;
 
-                    if (nextNameIsBigger)
-                        j++;
+                    if (nextNamePrecedsCurrent) 
+                    {
+                        //print 
+                        Console.WriteLine($"{currentFullName} preceds {nextFullName}");
+                        
+                        j++;                        
+                    }
+                        
                 }
 
                 var rootNodeNameSmallerThanNextNodeName = nodeRootFullName.CompareTo($"{customers[j].FirstName}{customers[j].LastName}") < 0;
@@ -119,29 +130,43 @@ namespace customer_manager_api.infrastructure.Services
         }
 
         private void SynchronizeCache(Customer[] customers)
-        {
+        {            
             var existingCustomers = GetCachedCustomers();
 
             if (existingCustomers is null)
             {
                 HeapSortByName(customers);
-                _cache.Set("customers", customers);
+                _cache.Set(CacheKeys.Customers, customers);
                 return;
             }
 
+
+            //TODO: check the heap sort here
             var updatedArray = existingCustomers.Concat(customers).ToArray();
             HeapSortByName(updatedArray);
 
-            _cache.Set("customers", updatedArray);
+            _cache.Set(CacheKeys.Customers, updatedArray);
         }
 
         private Customer[] GetCachedCustomers()
         {
-            return _cache.Get<Customer[]>("customers");
+            return _cache.Get<Customer[]>(CacheKeys.Customers);
         }
-        public IEnumerable<Customer> GetCustomers()
+        public async Task<IEnumerable<Customer>> GetCustomersAsync()
         {
-            return GetCachedCustomers();
+            var cachedCustomers = GetCachedCustomers();
+
+            var noCachedCustomers = cachedCustomers is null || !cachedCustomers.Any();
+
+            if (noCachedCustomers)
+            {
+                var customers = (await _repository.GetAllAsync()).ToArray();
+                HeapSortByName(customers);
+                _cache.Set(CacheKeys.Customers, customers);
+                return customers;
+            }
+
+            return cachedCustomers;
         }
     }
 }

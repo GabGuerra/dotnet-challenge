@@ -10,8 +10,8 @@ using customer_manager_api.infrastructure.Context;
 namespace customer_manager_api.infrastructure.Migrations
 {
     [DbContext(typeof(CustomerDbContext))]
-    [Migration("20231205183502_InitialCreation")]
-    partial class InitialCreation
+    [Migration("20231206013758_InitialCreationWithFixedSchemaName")]
+    partial class InitialCreationWithFixedSchemaName
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {

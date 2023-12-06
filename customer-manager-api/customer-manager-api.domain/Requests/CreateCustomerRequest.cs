@@ -27,11 +27,11 @@ namespace customer_management.Requests
         {
             public CreateCustomerRequestValidator()
             {
-                RuleFor(x => x.FirstName).NotEmpty().WithMessage(ErrorMessages.FirstNameRequired);
-                RuleFor(x => x.LastName).NotEmpty().WithMessage(ErrorMessages.LastNameRequired);
-                RuleFor(x => x.Age).NotEmpty().WithMessage(ErrorMessages.AgeRequired);
-                RuleFor(x => x.Age).GreaterThanOrEqualTo(18).WithMessage(ErrorMessages.MustBeOver18);
-                RuleFor(x => x.Id).NotEmpty().WithMessage(ErrorMessages.IdRequired);
+                RuleFor(x => x.FirstName).NotEmpty().WithMessage(ValidationMessages.FirstNameRequired);
+                RuleFor(x => x.LastName).NotEmpty().WithMessage(ValidationMessages.LastNameRequired);
+                RuleFor(x => x.Age).NotEmpty().WithMessage(ValidationMessages.AgeRequired);
+                RuleFor(x => x.Age).GreaterThanOrEqualTo(18).WithMessage(ValidationMessages.MustBeOver18);
+                RuleFor(x => x.Id).NotEmpty().WithMessage(ValidationMessages.IdRequired);
             }
         }
     }

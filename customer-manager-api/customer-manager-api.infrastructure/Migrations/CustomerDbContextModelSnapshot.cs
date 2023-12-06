@@ -25,15 +25,15 @@ namespace customer_manager_api.infrastructure.Migrations
                         .HasColumnType("int");
 
                     b.Property<int>("Age")
-                        .HasColumnType("int");
+                        .HasColumnType("tinyint");
 
                     b.Property<string>("FirstName")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasColumnType("char(128)");
 
                     b.Property<string>("LastName")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasColumnType("char(128)");
 
                     b.HasKey("Id");
 
