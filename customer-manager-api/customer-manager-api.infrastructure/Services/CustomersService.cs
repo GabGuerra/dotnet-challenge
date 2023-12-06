@@ -86,7 +86,7 @@ namespace customer_manager_api.infrastructure.Services
 
         }
         private void CreateHeap(Customer[] customers, int start, int end)
-        {            
+        {
             var nodeRoot = customers[start];
             var nodeRootFullName = $"{nodeRoot.FirstName}{nodeRoot.LastName}";
             var j = start * 2 + 1;
@@ -100,14 +100,8 @@ namespace customer_manager_api.infrastructure.Services
                 {
                     var nextNamePrecedsCurrent = currentFullName.CompareTo(nextFullName) < 0;
 
-                    if (nextNamePrecedsCurrent) 
-                    {
-                        //print 
-                        Console.WriteLine($"{currentFullName} preceds {nextFullName}");
-                        
-                        j++;                        
-                    }
-                        
+                    if (nextNamePrecedsCurrent)
+                        j++;
                 }
 
                 var rootNodeNameSmallerThanNextNodeName = nodeRootFullName.CompareTo($"{customers[j].FirstName}{customers[j].LastName}") < 0;
@@ -130,7 +124,7 @@ namespace customer_manager_api.infrastructure.Services
         }
 
         private void SynchronizeCache(Customer[] customers)
-        {            
+        {
             var existingCustomers = GetCachedCustomers();
 
             if (existingCustomers is null)
