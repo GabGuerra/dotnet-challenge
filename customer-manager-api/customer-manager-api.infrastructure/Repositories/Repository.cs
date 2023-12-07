@@ -9,7 +9,7 @@ namespace customer_manager_api.infrastructure.Repositories
     public class Repository<T, TKey> : IRepository<T, TKey> where T : Entity<TKey>
     {
         protected CustomerDbContext _dbContext;
-        private readonly DbSet<T> _table;
+        protected readonly DbSet<T> _table;
 
         public Repository(CustomerDbContext customerDbContext)
         {
@@ -28,7 +28,10 @@ namespace customer_manager_api.infrastructure.Repositories
         
         public async Task<IEnumerable<T>> AddRangeAsync(IEnumerable<T> entities)
         {
+
+            _dbContext.ChangeTracker.AutoDetectChangesEnabled = false;
             await _table.AddRangeAsync(entities);
+            _dbContext.ChangeTracker.AutoDetectChangesEnabled = true;
             await _dbContext.SaveChangesAsync();
 
             return entities;
@@ -36,12 +39,17 @@ namespace customer_manager_api.infrastructure.Repositories
 
         public async Task<IEnumerable<T>> GetAllAsync()
         {
-            return await _table.ToListAsync();
+            return await _table.AsNoTracking().ToListAsync();
         }
 
         public async Task<bool> ExistsAsync(Expression<Func<T, bool>> predicate)
         {
-            return await _table.AnyAsync(predicate);
+            return await _table.AsNoTracking().AnyAsync(predicate);
+        }
+
+        public async Task<IEnumerable<T>> GetAllAsync(Expression<Func<T, bool>> predicate)
+        {
+            return await _table.AsNoTracking().Where(predicate).ToListAsync();            
         }
     }
 }

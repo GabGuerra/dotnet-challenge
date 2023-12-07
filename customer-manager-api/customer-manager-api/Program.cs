@@ -1,9 +1,6 @@
 using customer_manager_api.infrastructure.Context;
 using customer_manager_api.infrastructure.Extensions;
-using Hangfire;
-using Hangfire.MySql;
 using Microsoft.EntityFrameworkCore;
-using System.Transactions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,21 +17,6 @@ builder.Services.AddDbContext<CustomerDbContext>(o =>
             errorNumbersToAdd: null);
     });
 });
-
-builder.Services.AddHangfire(configuration => configuration
-    .SetDataCompatibilityLevel(CompatibilityLevel.Version_170)
-    .UseSimpleAssemblyNameTypeSerializer()
-    .UseRecommendedSerializerSettings()
-        .UseStorage(new MySqlStorage(connectionString, new MySqlStorageOptions
-        {
-            TransactionIsolationLevel = IsolationLevel.ReadCommitted,
-            TablesPrefix = "Hangfire"
-        })));
-
-
-builder.Services.AddHangfireServer();
-
-builder.Services.AddHangfireServer();
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -54,7 +36,6 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-app.UseHangfireDashboard();
 app.UseAuthorization();
 
 using (var scope = app.Services.CreateScope())

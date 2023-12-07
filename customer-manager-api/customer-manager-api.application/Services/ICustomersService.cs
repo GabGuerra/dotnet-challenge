@@ -7,6 +7,6 @@ namespace customer_manager_api.application.Services
     public interface ICustomersService
     {
         Task<ApiResponse> CreateCustomersAsync(IEnumerable<CreateCustomerRequest> customers);
-        Task<IEnumerable<Customer>> GetCustomersAsync();
+        Task<DataResponse<Customer[]>> GetCustomersAsync();        
     }
 }

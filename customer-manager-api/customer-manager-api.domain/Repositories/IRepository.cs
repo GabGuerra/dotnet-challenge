@@ -8,6 +8,7 @@ namespace customer_manager_api.domain.Repositories
         Task<T> AddAsync(T entity);
         Task<IEnumerable<T>> AddRangeAsync(IEnumerable<T> entities);
         Task<IEnumerable<T>> GetAllAsync();
+        Task<IEnumerable<T>> GetAllAsync(Expression<Func<T, bool>> predicate);
         Task<bool> ExistsAsync(Expression<Func<T, bool>> predicate);
     }
 }

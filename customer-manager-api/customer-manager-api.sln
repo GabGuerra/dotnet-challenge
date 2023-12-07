@@ -3,13 +3,15 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.6.33829.357
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "customer-manager-api", "customer-manager-api\customer-manager-api.csproj", "{23D187D8-2482-438B-896D-AF8F1F60F12E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "customer-manager-api", "customer-manager-api\customer-manager-api.csproj", "{23D187D8-2482-438B-896D-AF8F1F60F12E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "customer-manager-api.domain", "customer-manager-api.domain\customer-manager-api.domain.csproj", "{F320E344-92F2-4E05-AADC-A7A634853D34}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "customer-manager-api.domain", "customer-manager-api.domain\customer-manager-api.domain.csproj", "{F320E344-92F2-4E05-AADC-A7A634853D34}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "customer-manager-api.infrastructure", "customer-manager-api.infrastructure\customer-manager-api.infrastructure.csproj", "{9EF0E676-47E6-4CD1-95A4-CCF1EE50C209}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "customer-manager-api.infrastructure", "customer-manager-api.infrastructure\customer-manager-api.infrastructure.csproj", "{9EF0E676-47E6-4CD1-95A4-CCF1EE50C209}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "customer-manager-api.application", "customer-manager-api.application\customer-manager-api.application.csproj", "{D7B71A3F-A6DE-4910-9166-D46496DE38DB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "customer-manager-api.application", "customer-manager-api.application\customer-manager-api.application.csproj", "{D7B71A3F-A6DE-4910-9166-D46496DE38DB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "customer-manager-api-consumer", "customer-manager-api-consumer\customer-manager-api-consumer.csproj", "{34F681DD-88EF-49F7-8BCD-5192C1D83F26}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,6 +35,10 @@ Global
 		{D7B71A3F-A6DE-4910-9166-D46496DE38DB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D7B71A3F-A6DE-4910-9166-D46496DE38DB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D7B71A3F-A6DE-4910-9166-D46496DE38DB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{34F681DD-88EF-49F7-8BCD-5192C1D83F26}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{34F681DD-88EF-49F7-8BCD-5192C1D83F26}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{34F681DD-88EF-49F7-8BCD-5192C1D83F26}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{34F681DD-88EF-49F7-8BCD-5192C1D83F26}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
