@@ -1,14 +1,13 @@
 using customer_management.Requests;
 using customer_manager_api.application.Services;
-using customer_manager_api.domain.Constants;
+using customer_manager_api.Controllers;
 using Microsoft.AspNetCore.Mvc;
-using System.Net;
 
 namespace customer_manager_api.api.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    public class CustomersController : ControllerBase
+    public class CustomersController : BaseApiController
     {
         private readonly ICustomersService _service;
 
@@ -20,18 +19,15 @@ namespace customer_manager_api.api.Controllers
         [HttpPost]
         public async Task<IActionResult> Post([FromBody] IEnumerable<CreateCustomerRequest> customersToCreate)
         {
-            var response = await _service.CreateCustomersAsync(customersToCreate);
-
-            if (response.Status.Equals(ResponseStatuses.PartialSuccess, StringComparison.InvariantCultureIgnoreCase))
-                return StatusCode((int)HttpStatusCode.MultiStatus, response);
-
-            return StatusCode((int)HttpStatusCode.Created, response);
+            return await ExecutePost(async () => 
+                await _service.CreateCustomersAsync(customersToCreate)
+            );
         }
 
         [HttpGet]
-        public IActionResult Get()
+        public async Task<IActionResult> Get()
         {
-            var customers = _service.GetCustomers();
+            var customers = await _service.GetCustomersAsync();
 
             return Ok(customers);
         }

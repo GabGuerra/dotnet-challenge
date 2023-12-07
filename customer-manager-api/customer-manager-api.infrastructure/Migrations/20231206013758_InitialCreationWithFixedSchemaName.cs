@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace customer_manager_api.infrastructure.Migrations
 {
-    public partial class InitialCreation : Migration
+    public partial class InitialCreationWithFixedSchemaName : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -18,9 +18,9 @@ namespace customer_manager_api.infrastructure.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
-                    FirstName = table.Column<string>(type: "varchar(128)", nullable: false)
+                    FirstName = table.Column<string>(type: "char(128)", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    LastName = table.Column<string>(type: "varchar(128)", nullable: false)
+                    LastName = table.Column<string>(type: "char(128)", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     Age = table.Column<int>(type: "tinyint", nullable: false)
                 },

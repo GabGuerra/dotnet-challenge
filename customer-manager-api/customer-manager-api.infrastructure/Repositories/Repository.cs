@@ -1,30 +1,55 @@
 ﻿using customer_manager_api.domain.Models;
 using customer_manager_api.domain.Repositories;
-using System.Text.Json;
+using customer_manager_api.infrastructure.Context;
+using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 
 namespace customer_manager_api.infrastructure.Repositories
 {
     public class Repository<T, TKey> : IRepository<T, TKey> where T : Entity<TKey>
     {
-        public Task AddAsync(T entity)
+        protected CustomerDbContext _dbContext;
+        protected readonly DbSet<T> _table;
+
+        public Repository(CustomerDbContext customerDbContext)
         {
-            throw new NotImplementedException();
+            _dbContext = customerDbContext;
+            _table = _dbContext.Set<T>();
         }
 
-        public Task AddRangeAsync(IEnumerable<T> entities)
+        public async Task<T> AddAsync(T entity)
         {
-            //TODO: call actual repo
-            foreach (var entity in entities)
-            {
-                Console.WriteLine($"Creating {JsonSerializer.Serialize(entity)}");
-            }
+            _table.Add(entity);
 
-            return Task.CompletedTask;
+            await _dbContext.SaveChangesAsync();
+
+            return entity;
+        }
+        
+        public async Task<IEnumerable<T>> AddRangeAsync(IEnumerable<T> entities)
+        {
+
+            _dbContext.ChangeTracker.AutoDetectChangesEnabled = false;
+            await _table.AddRangeAsync(entities);
+            _dbContext.ChangeTracker.AutoDetectChangesEnabled = true;
+            await _dbContext.SaveChangesAsync();
+
+            return entities;
         }
 
-        public Task<IEnumerable<T>> GetAllAsync()
+        public async Task<IEnumerable<T>> GetAllAsync()
         {
-            throw new NotImplementedException();
+            return await _table.AsNoTracking().ToListAsync();
+        }
+
+        public async Task<bool> ExistsAsync(Expression<Func<T, bool>> predicate)
+        {
+            return await _table.AsNoTracking().AnyAsync(predicate);
+        }
+
+        public async Task<IEnumerable<T>> GetAllAsync(Expression<Func<T, bool>> predicate)
+        {
+            return await _table.AsNoTracking().Where(predicate).ToListAsync();            
         }
     }
 }
