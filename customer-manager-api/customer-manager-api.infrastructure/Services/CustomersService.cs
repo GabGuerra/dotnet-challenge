@@ -5,10 +5,7 @@ using customer_manager_api.domain.Constants;
 using customer_manager_api.domain.Models;
 using customer_manager_api.domain.Repositories;
 using customer_manager_api.domain.Responses;
-using Hangfire;
 using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.Logging;
-using System.Diagnostics;
 using static customer_management.Requests.CreateCustomerRequest;
 
 namespace customer_manager_api.infrastructure.Services
@@ -17,63 +14,75 @@ namespace customer_manager_api.infrastructure.Services
     {
         private readonly ICustomerRepository _repository;
         private readonly IMemoryCache _cache;
-        private readonly ILogger<CustomersService> _logger;
-
-        public CustomersService(ICustomerRepository repository, IMemoryCache cache, ILogger<CustomersService> logger)
+        private static SemaphoreSlim semaphore = new SemaphoreSlim(1, 1); //due to race condition of the consumer, only allow 1 thread, to avoid PK error
+        public CustomersService(ICustomerRepository repository, IMemoryCache cache)
         {
             _repository = repository;
             _cache = cache;
-            _logger = logger;
         }
 
         public async Task<ApiResponse> CreateCustomersAsync(IEnumerable<CreateCustomerRequest> customers)
         {
-            var errors = new Dictionary<string, string[]>();
-            var customersToCreate = new List<Customer>();
-            var validator = new CreateCustomerRequestValidator();
-            var count = 0;
-            var customerIds = customers.Select(c => c.Id).ToList();
-            var customersWithIdsOnDatabase = await _repository.GetAllAsync(x => customerIds.Contains(x.Id));
-
-            foreach (var c in customers)
+            try
             {
-                var validation = await validator.ValidateAsync(c);
+                await semaphore.WaitAsync(); 
+                var errors = new Dictionary<string, string[]>();
+                var customersToCreate = new List<Customer>();
+                var validator = new CreateCustomerRequestValidator();
+                var count = 0;
+                var customerIds = customers.Select(c => c.Id).ToList();
+                var customersWithIdsOnDatabase = await _repository.GetAllAsync(x => customerIds.Contains(x.Id));
 
-                if (!validation.IsValid)
+                foreach (var c in customers)
                 {
+                    var validation = await validator.ValidateAsync(c);
+                    if (!validation.IsValid)
+                    {
 
-                    errors.Add(count.ToString(), validation.ToDictionary().Values.AsEnumerable().SelectMany((string[] x) => x).ToArray());
+                        errors.Add(count.ToString(), validation.ToDictionary().Values.AsEnumerable().SelectMany((string[] x) => x).ToArray());
+                        count++;
+                        continue;
+                    }
+
+                    if (customersWithIdsOnDatabase.Any(x => x.Id == c.Id))
+                    {
+                        errors.Add(count.ToString(), new string[] { ValidationMessages.IdMustBeUnique });
+                        count++;
+                        continue;
+                    }
+
+                    customersToCreate.Add((Customer)c);
                     count++;
-                    continue;
                 }
 
-                if (customersWithIdsOnDatabase.Any(x => x.Id == c.Id))
-                {
-                    _logger.LogWarning($"Customer with id {c.Id} already exists");
-                    errors.Add(count.ToString(), new string[] { ValidationMessages.IdMustBeUnique });
-                    count++;
-                    continue;
+                var customerArray = customersToCreate.ToArray();
+
+                if (customerArray.Any())
+                {                    
+                    SynchronizeCache(customerArray);                    
+                    await _repository.AddRangeAsync(customerArray); //TODO: add at a queue and create a backgroundhosted service to read from that queue
                 }
 
-                customersToCreate.Add((Customer)c);
-                count++;
+                return new ApiResponse
+                {
+                    Errors = errors,
+                    Success = customersToCreate.Any(),
+                    Message = errors.Any() ? WarningMessages.RequestHasErrors : SuccessMessages.RequestSucceeded
+                };
             }
-
-            var customerArray = customersToCreate.ToArray();
-
-            if (customerArray.Any())
+            catch (Exception ex)
             {
-                SynchronizeCache(customerArray);
-                //TODO: add at a queue and create a backgroundhosted service to read from that queue
-                await _repository.AddRangeAsync(customerArray);
+                //log the exception to sentry or something similar
+                return new ApiResponse
+                {
+                    Success = false,
+                    Message = ErrorMessages.ServerError
+                };
             }
-
-            return new ApiResponse
-            {
-                Errors = errors,
-                Success = customersToCreate.Any(),
-                Message = errors.Any() ? WarningMessages.RequestHasErrors : SuccessMessages.RequestSucceeded
-            };
+            finally
+            {                
+                semaphore.Release();
+            }
         }
 
         private void HeapSortByName(Customer[] customers)

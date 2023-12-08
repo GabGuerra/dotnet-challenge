@@ -19,8 +19,10 @@ namespace customer_manager_api.api.Controllers
         [HttpPost]
         public async Task<IActionResult> Post([FromBody] IEnumerable<CreateCustomerRequest> customersToCreate)
         {
-            return await ExecutePost(async () => 
-                await _service.CreateCustomersAsync(customersToCreate)
+            return await ExecutePost(async () =>
+             {                 
+                 return await _service.CreateCustomersAsync(customersToCreate);
+             }
             );
         }
 
