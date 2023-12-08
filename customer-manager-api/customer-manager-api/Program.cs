@@ -12,7 +12,7 @@ builder.Services.AddDbContext<CustomerDbContext>(o =>
     o.UseMySql(connectionString, new MySqlServerVersion(new Version(8, 0, 35)), options =>
     {
         options.EnableRetryOnFailure(
-            maxRetryCount: 3,
+            maxRetryCount: 5,
             maxRetryDelay: TimeSpan.FromSeconds(30),
             errorNumbersToAdd: null);
     });
