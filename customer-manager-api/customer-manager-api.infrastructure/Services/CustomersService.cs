@@ -25,41 +25,14 @@ namespace customer_manager_api.infrastructure.Services
         {
             try
             {
-                await semaphore.WaitAsync(); 
-                var errors = new Dictionary<string, string[]>();
+                await semaphore.WaitAsync();
                 var customersToCreate = new List<Customer>();
-                var validator = new CreateCustomerRequestValidator();
-                var count = 0;
-                var customerIds = customers.Select(c => c.Id).ToList();
-                var customersWithIdsOnDatabase = await _repository.GetAllAsync(x => customerIds.Contains(x.Id));
-
-                foreach (var c in customers)
-                {
-                    var validation = await validator.ValidateAsync(c);
-                    if (!validation.IsValid)
-                    {
-
-                        errors.Add(count.ToString(), validation.ToDictionary().Values.AsEnumerable().SelectMany((string[] x) => x).ToArray());
-                        count++;
-                        continue;
-                    }
-
-                    if (customersWithIdsOnDatabase.Any(x => x.Id == c.Id))
-                    {
-                        errors.Add(count.ToString(), new string[] { ValidationMessages.IdMustBeUnique });
-                        count++;
-                        continue;
-                    }
-
-                    customersToCreate.Add((Customer)c);
-                    count++;
-                }
-
+                var errors = await ValidateAndPopulateCustomersAsync(customers, customersToCreate);
                 var customerArray = customersToCreate.ToArray();
 
                 if (customerArray.Any())
-                {                    
-                    SynchronizeCache(customerArray);                    
+                {
+                    SynchronizeCache(customerArray);
                     await _repository.AddRangeAsync(customerArray); //TODO: add at a queue and create a backgroundhosted service to read from that queue
                 }
 
@@ -70,9 +43,8 @@ namespace customer_manager_api.infrastructure.Services
                     Message = errors.Any() ? WarningMessages.RequestHasErrors : SuccessMessages.RequestSucceeded
                 };
             }
-            catch (Exception ex)
+            catch
             {
-                //log the exception to sentry or something similar
                 return new ApiResponse
                 {
                     Success = false,
@@ -80,9 +52,42 @@ namespace customer_manager_api.infrastructure.Services
                 };
             }
             finally
-            {                
+            {
                 semaphore.Release();
             }
+        }
+
+        private async Task<Dictionary<string, string[]>> ValidateAndPopulateCustomersAsync(IEnumerable<CreateCustomerRequest> customers, List<Customer> customersToCreate)
+        {
+            var validator = new CreateCustomerRequestValidator();
+            var customerIds = customers.Select(c => c.Id).ToList();
+            var customersWithIdsOnDatabase = await _repository.GetAllAsync(x => customerIds.Contains(x.Id));
+            var errors = new Dictionary<string, string[]>();
+            var count = 0;
+
+            foreach (var c in customers)
+            {
+                var validation = await validator.ValidateAsync(c);
+                if (!validation.IsValid)
+                {
+
+                    errors.Add(count.ToString(), validation.ToDictionary().Values.AsEnumerable().SelectMany((string[] x) => x).ToArray());
+                    count++;
+                    continue;
+                }
+
+                if (customersWithIdsOnDatabase.Any(x => x.Id == c.Id))
+                {
+                    errors.Add(count.ToString(), new string[] { ValidationMessages.IdMustBeUnique });
+                    count++;
+                    continue;
+                }
+
+                customersToCreate.Add((Customer)c);
+                count++;
+            }
+
+            return errors;
         }
 
         private void HeapSortByName(Customer[] customers)
@@ -102,8 +107,8 @@ namespace customer_manager_api.infrastructure.Services
                 customers[i] = aux;
                 CreateHeap(customers, 0, i - 1);
             }
-
         }
+
         private void CreateHeap(Customer[] customers, int start, int end)
         {
             var nodeRoot = customers[start];
